@@ -103,4 +103,4 @@ PostgreSQL должна работать во время использован�
 
 ## Демонстрация
 
-Ссылка: 
+[Посмотреть демонстрацию приложения](https://drive.google.com/file/d/19nMOaMebuRsiovhzaFTvhMFWcj-4do0f/view?usp=sharing)
