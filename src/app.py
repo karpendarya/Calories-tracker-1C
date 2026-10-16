@@ -4,6 +4,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from src.database import get_engine
 from src.repo import add_dish, get_dishes, update_dish
+from src.diary import show_diary
 
 
 @st.cache_resource
@@ -207,8 +208,7 @@ def main() -> None:
         show_dish_catalog(engine)
 
     with diary_tab:
-        st.header("Дневник питания")
-        st.info("Здесь будут доступны записи о питании и итоги за день.")
+        show_diary(engine)
 
     with statistics_tab:
         st.header("Статистика")
