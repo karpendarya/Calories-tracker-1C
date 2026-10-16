@@ -5,6 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from src.database import get_engine
 from src.repo import add_dish, get_dishes, update_dish
 from src.diary import show_diary
+from src.statistics import show_statistics
 
 
 @st.cache_resource
@@ -211,5 +212,4 @@ def main() -> None:
         show_diary(engine)
 
     with statistics_tab:
-        st.header("Статистика")
-        st.info("Здесь появится график потребления калорий за период.")
+        show_statistics(engine)

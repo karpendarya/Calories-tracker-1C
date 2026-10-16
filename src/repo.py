@@ -93,3 +93,31 @@ def get_diary_entries(engine: Engine, entry_date: date) -> list[dict]:
     with engine.connect() as connection:
         result = connection.execute(query, {"entry_date": entry_date})
         return [dict(row) for row in result.mappings()]
+
+
+def get_daily_totals(
+    engine: Engine,
+    start_date: date,
+    end_date: date,
+) -> list[dict]:
+    query = text("""
+        SELECT
+            entry_date,
+            SUM(calories * weight_grams / 100) AS calories,
+            SUM(protein * weight_grams / 100) AS protein,
+            SUM(fat * weight_grams / 100) AS fat,
+            SUM(carbs * weight_grams / 100) AS carbs
+        FROM diary_entries
+        WHERE entry_date BETWEEN :start_date AND :end_date
+        GROUP BY entry_date
+        ORDER BY entry_date
+    """)
+
+    parameters = {
+        "start_date": start_date,
+        "end_date": end_date,
+    }
+
+    with engine.connect() as connection:
+        result = connection.execute(query, parameters)
+        return [dict(row) for row in result.mappings()]
