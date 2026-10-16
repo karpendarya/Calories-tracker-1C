@@ -77,10 +77,12 @@ def show_statistics(engine: Engine) -> None:
         "Это означает отсутствие данных в дневнике."
     )
 
+    chart_color = "#3d6e62"
+
     if len(data) == 1:
-        st.bar_chart(data, x="Дата", y="Ккал")
+        st.bar_chart(data, x="Дата", y="Ккал", color=chart_color)
     else:
-        st.line_chart(data, x="Дата", y="Ккал")
+        st.line_chart(data, x="Дата", y="Ккал", color=chart_color)
 
     st.subheader("Итоги по дням")
 
