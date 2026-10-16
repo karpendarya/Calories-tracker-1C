@@ -2,7 +2,7 @@ from pathlib import Path
 
 from sqlalchemy import inspect
 
-from database import get_engine
+from src.database import get_engine
 
 
 SCHEMA_PATH = Path(__file__).parent / "schema.sql"

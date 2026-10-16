@@ -5,8 +5,7 @@ from sqlalchemy import URL, create_engine, text
 from sqlalchemy.engine import Engine
 
 
-CONFIG_PATH = Path(__file__).parent / ".streamlit" / "secrets.toml"
-
+CONFIG_PATH = Path(__file__).resolve().parents[1] / ".streamlit" / "secrets.toml"
 
 def get_engine() -> Engine:
     with CONFIG_PATH.open("rb") as config_file:
