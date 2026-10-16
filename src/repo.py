@@ -23,3 +23,21 @@ def get_dishes(engine: Engine, search: str = "") -> list[dict]:
     with engine.connect() as connection:
         result = connection.execute(query, {"search": search.strip()})
         return [dict(row) for row in result.mappings()]
+
+
+def update_dish(engine: Engine, dish_id: int, dish: dict) -> bool:
+    query = text("""
+        UPDATE dishes
+        SET name = :name,
+            calories = :calories,
+            protein = :protein,
+            fat = :fat,
+            carbs = :carbs
+        WHERE id = :dish_id
+    """)
+
+    parameters = {**dish, "dish_id": dish_id}
+
+    with engine.begin() as connection:
+        result = connection.execute(query, parameters)
+        return result.rowcount == 1
