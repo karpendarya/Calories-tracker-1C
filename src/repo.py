@@ -121,3 +121,23 @@ def get_daily_totals(
     with engine.connect() as connection:
         result = connection.execute(query, parameters)
         return [dict(row) for row in result.mappings()]
+
+
+def delete_diary_entry(
+    engine: Engine,
+    entry_id: int,
+    entry_date: date,
+) -> bool:
+    query = text("""
+        DELETE FROM diary_entries
+        WHERE id = :entry_id AND entry_date = :entry_date
+    """)
+
+    parameters = {
+        "entry_id": entry_id,
+        "entry_date": entry_date,
+    }
+
+    with engine.begin() as connection:
+        result = connection.execute(query, parameters)
+        return result.rowcount == 1

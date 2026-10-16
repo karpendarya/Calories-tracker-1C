@@ -1,4 +1,5 @@
 import streamlit as st
+import tomllib
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -6,6 +7,7 @@ from src.database import get_engine
 from src.repo import add_dish, get_dishes, update_dish
 from src.diary import show_diary
 from src.statistics import show_statistics
+from src.validation import get_dish_error
 
 
 @st.cache_resource
@@ -23,7 +25,6 @@ def show_add_dish_form(engine: Engine) -> None:
         calories = st.number_input(
             "Калорийность, ккал",
             min_value=0.0,
-            max_value=999999.99,
             step=1.0,
         )
 
@@ -44,10 +45,6 @@ def show_add_dish_form(engine: Engine) -> None:
     if not submitted:
         return
 
-    if not name.strip():
-        st.error("Введите название блюда.")
-        return
-
     dish = {
         "name": name.strip(),
         "calories": calories,
@@ -55,6 +52,11 @@ def show_add_dish_form(engine: Engine) -> None:
         "fat": fat,
         "carbs": carbs,
     }
+
+    error = get_dish_error(dish)
+    if error:
+        st.error(error)
+        return
 
     try:
         add_dish(engine, dish)
@@ -89,7 +91,6 @@ def show_edit_dish_form(engine: Engine, dishes: list[dict]) -> None:
         calories = st.number_input(
             "Калорийность, ккал",
             min_value=0.0,
-            max_value=999999.99,
             value=float(dish["calories"]),
             step=1.0,
         )
@@ -123,10 +124,6 @@ def show_edit_dish_form(engine: Engine, dishes: list[dict]) -> None:
     if not submitted:
         return
 
-    if not name.strip():
-        st.error("Введите название блюда.")
-        return
-
     updated_dish = {
         "name": name.strip(),
         "calories": calories,
@@ -134,6 +131,11 @@ def show_edit_dish_form(engine: Engine, dishes: list[dict]) -> None:
         "fat": fat,
         "carbs": carbs,
     }
+
+    error = get_dish_error(updated_dish)
+    if error:
+        st.error(error)
+        return
 
     try:
         updated = update_dish(engine, dish_id, updated_dish)
@@ -197,7 +199,33 @@ def main() -> None:
     st.title("Дневник питания")
     st.write("Приложение для учета питания и расчета КБЖУ.")
 
-    engine = get_database_engine()
+    try:
+        engine = get_database_engine()
+    except FileNotFoundError:
+        st.error(
+            "Не найден файл .streamlit/secrets.toml. "
+            "Создайте его по примеру secrets.toml.example. "
+            "Инструкция приведена в README."
+        )
+        st.stop()
+    except tomllib.TOMLDecodeError:
+        st.error(
+            "Не удалось прочитать настройки подключения. "
+            "Проверьте формат файла .streamlit/secrets.toml."
+        )
+        st.stop()
+    except (KeyError, TypeError, ValueError):
+        st.error(
+            "Некорректные параметры подключения. "
+            "Сравните настройки с файлом secrets.toml.example."
+        )
+        st.stop()
+    except OSError:
+        st.error(
+            "Не удалось открыть файл настроек. "
+            "Проверьте права доступа к .streamlit/secrets.toml."
+        )
+        st.stop()
 
     catalog_tab, diary_tab, statistics_tab = st.tabs(
         ["Каталог блюд", "Дневник питания", "Статистика"]

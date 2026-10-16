@@ -5,7 +5,8 @@ import streamlit as st
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import SQLAlchemyError
 
-from src.repo import add_diary_entry, get_diary_entries, get_dishes
+from src.repo import add_diary_entry, get_diary_entries, get_dishes, delete_diary_entry
+from src.validation import get_weight_error
 
 
 def show_entry_form(
@@ -30,7 +31,7 @@ def show_entry_form(
         weight = st.number_input(
             "Вес порции, г",
             min_value=0.01,
-            max_value=99999999.99,
+            max_value=10000.0,
             value=100.0,
             step=1.0,
             format="%.2f",
@@ -39,6 +40,11 @@ def show_entry_form(
         submitted = st.form_submit_button("Добавить в дневник")
 
     if not submitted:
+        return
+
+    error = get_weight_error(weight)
+    if error:
+        st.error(error)
         return
 
     try:
@@ -54,6 +60,46 @@ def show_entry_form(
         return
 
     st.session_state["diary_message"] = "Запись добавлена в дневник."
+    st.rerun()
+
+
+def show_delete_entry_form(
+    engine: Engine,
+    entry_date: date,
+    entries: list[dict],
+) -> None:
+    st.subheader("Удалить запись")
+    st.caption("Выберите ошибочную запись. Блюдо останется в каталоге.")
+
+    entries_by_id = {entry["id"]: entry for entry in entries}
+
+    with st.form(f"delete_entry_form_{entry_date}"):
+        entry_id = st.selectbox(
+            "Выберите запись для удаления",
+            options=list(entries_by_id),
+            format_func=lambda value: (
+                f"{entries_by_id[value]['dish_name']} — "
+                f"{entries_by_id[value]['weight_grams']:.2f} г "
+                f"(ID: {value})"
+            ),
+        )
+
+        submitted = st.form_submit_button("Удалить запись")
+
+    if not submitted:
+        return
+
+    try:
+        deleted = delete_diary_entry(engine, entry_id, entry_date)
+    except SQLAlchemyError:
+        st.error("Не удалось удалить запись. Проверьте подключение к БД.")
+        return
+
+    if not deleted:
+        st.error("Запись не найдена. Обновите страницу.")
+        return
+
+    st.session_state["diary_message"] = "Запись удалена."
     st.rerun()
 
 
@@ -103,6 +149,9 @@ def show_daily_entries(engine: Engine, entry_date: date) -> None:
     for column, (field, label) in zip(columns, nutrients):
         total = sum((entry[field] for entry in entries), Decimal("0"))
         column.metric(label, f"{total:.2f}")
+
+    st.divider()
+    show_delete_entry_form(engine, entry_date, entries)
 
 
 def show_diary(engine: Engine) -> None:
